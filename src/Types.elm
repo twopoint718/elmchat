@@ -8,6 +8,7 @@ type Action
   = SendMessage
   | Input String
   | SetName String
+  | Incoming (Array Message)
   | NoOp
 
 

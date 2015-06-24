@@ -18,6 +18,9 @@ update action model =
         field <- ""
       }
 
+    Incoming msgs ->
+      { model | messages <- msgs }
+
     Input say ->
       { model | field <- say }
 

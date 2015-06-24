@@ -2,14 +2,29 @@ module Main where
 
 
 import Html exposing (Html)
+import Signal exposing (Address, Mailbox, merge)
 import StartApp
 
 
+import Api exposing (currentMessages)
 import Model exposing (model)
-import View exposing (view)
 import Update exposing (update)
+import Types exposing (Action(NoOp))
+import View exposing (view)
 
 
 main : Signal Html
 main =
-  StartApp.start { model = model, view = view, update = update }
+  Signal.map (view actions.address) mergedModel
+
+
+actions : Mailbox Action
+actions =
+  Signal.mailbox NoOp
+
+
+mergedModel =
+  Signal.foldp
+    update
+    model
+    (merge actions.signal currentMessages.signal)
