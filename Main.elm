@@ -3,7 +3,6 @@ module Main where
 
 import Html exposing (Html)
 import Signal exposing (Address, Mailbox, merge)
-import StartApp
 
 
 import Api exposing (currentMessages)
