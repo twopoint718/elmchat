@@ -1,3 +1,5 @@
+![Screenshot](images/screenshot.png "Screenshot")
+
 # ElmChat
 
 Building a simple elm app to get my feets wet.
