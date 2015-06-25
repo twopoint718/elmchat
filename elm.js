@@ -19454,7 +19454,7 @@ Elm.View.make = function (_elm) {
                                                     ,$Html$Shorthand.td_(_L.fromArray([$Html.text(msg.message)]))]));
          };
          return A2($Html.table,
-         _L.fromArray([$Html$Attributes.$class("table table-striped")]),
+         _L.fromArray([$Html$Attributes.$class("table col-xs-10 table-striped")]),
          _L.fromArray([$Html$Shorthand.thead_(_L.fromArray([$Html$Shorthand.tr_(_L.fromArray([A2($Html.th,
                                                                                              _L.fromArray([$Html$Attributes.$class("col-xs-2")]),
                                                                                              _L.fromArray([$Html.text("Name")]))

@@ -99,7 +99,7 @@ messageList model =
           ]
   in
       table
-        [ A.class "table table-striped" ]
+        [ A.class "table col-xs-10 table-striped" ]
         [ thead_
           [ tr_
             [ th [ A.class "col-xs-2" ] [ text "Name" ]
