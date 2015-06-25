@@ -22,11 +22,22 @@ view address model =
     , A.href "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
     ]
     []
+  , node "link"
+    [ A.rel "stylesheet"
+    , A.href "css/style.css"
+    ]
+    []
+  , node "link"
+    [ A.href "http://fonts.googleapis.com/css?family=Special+Elite"
+    , A.rel "stylesheet"
+    ]
+    []
+  , img [A.src "images/joan.png"]
+    []
   , h1_ "Can We Talk!?"
   , row_ [ messageList model ]
   , row_ [ inputControls address model ]
   ]
-
 
 inputControls : Address Action -> Chat -> Html
 inputControls address model =
@@ -67,7 +78,7 @@ inputControls address model =
         ]
         []
       ]
-    , btnDefault_
+    , btnPrimary_
       { btnParam | label <- Just "Send" }
       address SendMessage
     ]
@@ -88,7 +99,7 @@ messageList model =
           ]
   in
       table
-        [ A.class "table table-striped" ]
+        [ A.class "table col-xs-10 table-striped" ]
         [ thead_
           [ tr_
             [ th [ A.class "col-xs-2" ] [ text "Name" ]
