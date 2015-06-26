@@ -11,12 +11,8 @@ import Types exposing (Action(..), Chat)
 update : Action -> Chat -> Chat
 update action model =
   case action of
-    SendMessage ->
-      { model |
-        messages <-
-          push { name = model.name, message = model.field } model.messages,
-        field <- ""
-      }
+    SendMessage msg ->
+      { model | field <- "" }
 
     Incoming msgs ->
       { model | messages <- msgs }

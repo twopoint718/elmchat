@@ -5,7 +5,7 @@ import Array exposing (Array)
 
 
 type Action
-  = SendMessage
+  = SendMessage Message
   | Input String
   | SetName String
   | Incoming (Array Message)

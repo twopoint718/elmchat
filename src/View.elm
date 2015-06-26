@@ -11,22 +11,15 @@ import Json.Decode as Json
 import Signal exposing (Address)
 
 
-import Types exposing (Action(..), Chat)
+import Api exposing (outgoingMessages)
+import Types exposing (Action(..), Chat, Message)
 
 
 view : Address Action -> Chat -> Html
 view address model =
   container_
-  [ node "link"
-    [ A.rel "stylesheet"
-    , A.href "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
-    ]
-    []
-  , node "link"
-    [ A.rel "stylesheet"
-    , A.href "css/style.css"
-    ]
-    []
+  [ stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
+  , stylesheet "css/style.css"
   , node "link"
     [ A.href "http://fonts.googleapis.com/css?family=Special+Elite"
     , A.rel "stylesheet"
@@ -35,8 +28,8 @@ view address model =
   , img [A.src "images/joan.png"]
     []
   , h1_ "Can We Talk!?"
-  , row_ [ messageList model ]
   , row_ [ inputControls address model ]
+  , row_ [ messageList model ]
   ]
 
 inputControls : Address Action -> Chat -> Html
@@ -74,20 +67,27 @@ inputControls address model =
         , A.placeholder "Enter a message"
         , A.value model.field
         , E.on "input" E.targetValue (Signal.message address << Input)
-        , E.onKeyUp address sendMessage
+        , E.onKeyUp outgoingMessages.address (mkMessage model |> sendMessage)
         ]
         []
       ]
     , btnPrimary_
       { btnParam | label <- Just "Send" }
-      address SendMessage
+      outgoingMessages.address (mkMessage model |> SendMessage)
     ]
   ]
 
 
-sendMessage : Int -> Action
-sendMessage key =
-  if key == 13 then SendMessage else NoOp
+mkMessage : Chat -> Message
+mkMessage m =
+  { name = m.name
+  , message = m.field
+  }
+
+
+sendMessage : Message -> Int -> Action
+sendMessage msg key =
+  if key == 13 then SendMessage msg else NoOp
 
 
 messageList : Chat -> Html
@@ -108,3 +108,11 @@ messageList model =
           ]
         , tbody_ (Array.toList (Array.map msgRow model.messages))
         ]
+
+
+stylesheet : String -> Html
+stylesheet href =
+  node "link"
+    [ A.rel "stylesheet"
+    , A.href href
+    ] []

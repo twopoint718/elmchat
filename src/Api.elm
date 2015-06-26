@@ -2,8 +2,9 @@ module Api where
 
 
 import Array exposing (Array)
-import Http
+import Http exposing (RawError, Response, defaultSettings, get, send)
 import Json.Decode as Json exposing ((:=))
+import Json.Encode exposing (Value, encode, object, string)
 import Task exposing (..)
 import Time exposing (every, second)
 
@@ -11,26 +12,28 @@ import Time exposing (every, second)
 import Types exposing (Message, Action(Incoming,NoOp))
 
 
+endpoint : String
+endpoint = "http://localhost:3000/messages"
+
+
+-- GET
+
+
 getMessages : Task String (Array Message)
 getMessages =
-  Http.get messageDecoder "http://localhost:3000/messages"
+  get messagesDecoder endpoint
     |> Task.mapError toString
 
 
-messageDecoder : Json.Decoder (Array Message)
+messagesDecoder : Json.Decoder (Array Message)
+messagesDecoder = Json.array messageDecoder
+
+
+messageDecoder : Json.Decoder Message
 messageDecoder =
-  let message =
-        Json.object2 (\name message -> { name = name, message = message })
-          ("name" := Json.string)
-          ("message" := Json.string)
-  in
-      Json.array message
-
-
-port runQuery : Signal (Task x ())
-port runQuery =
-  Signal.map (\_ -> getMessages) (Time.every (5 * second))
-    |> Signal.map queryHandler
+  Json.object2 (\name message -> { name = name, message = message })
+    ("name" := Json.string)
+    ("message" := Json.string)
 
 
 queryHandler : Task String (Array Message) -> Task x ()
@@ -51,4 +54,35 @@ toAction r =
 
 currentMessages : Signal.Mailbox Action
 currentMessages =
+  Signal.mailbox NoOp
+
+
+-- POST
+
+
+postMessage : Message -> Task String Response
+postMessage msg =
+  always "POST failed"
+  `mapError`
+  send defaultSettings
+    { verb = "POST"
+    , headers = []
+    , url = endpoint
+    , body =
+      messageEncoder msg
+        |> encode 0
+        |> Http.string
+    }
+
+
+messageEncoder : Message -> Json.Value
+messageEncoder msg =
+  object
+    [ ("name", string msg.name)
+    , ("message", string msg.message)
+    ]
+
+
+outgoingMessages : Signal.Mailbox Action
+outgoingMessages =
   Signal.mailbox NoOp
