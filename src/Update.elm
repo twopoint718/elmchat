@@ -1,7 +1,6 @@
 module Update where
 
 
-import Array exposing (push)
 import Signal exposing (Address)
 
 

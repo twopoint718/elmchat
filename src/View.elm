@@ -106,7 +106,7 @@ messageList model =
             , th_ [ text "Message" ]
             ]
           ]
-        , tbody_ (Array.toList (Array.map msgRow model.messages))
+        , tbody_ (List.map msgRow model.messages)
         ]
 
 

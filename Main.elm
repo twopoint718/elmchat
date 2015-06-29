@@ -16,7 +16,7 @@ import Api exposing
   )
 import Model exposing (model)
 import Update exposing (update)
-import Types exposing (Action(NoOp))
+import Types exposing (Action(NoOp), Chat)
 import View exposing (view)
 
 
@@ -39,6 +39,7 @@ mainSignal =
     ]
 
 
+mergedModel : Signal Chat
 mergedModel =
   Signal.foldp update model mainSignal
 

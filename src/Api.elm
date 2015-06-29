@@ -1,7 +1,6 @@
 module Api where
 
 
-import Array exposing (Array)
 import Http exposing (RawError, Response, defaultSettings, get, send)
 import Json.Decode as Json exposing ((:=))
 import Json.Encode exposing (Value, encode, object, string)
@@ -19,14 +18,14 @@ endpoint = "http://localhost:3000/messages"
 -- GET
 
 
-getMessages : Task String (Array Message)
+getMessages : Task String (List Message)
 getMessages =
   get messagesDecoder endpoint
     |> Task.mapError toString
 
 
-messagesDecoder : Json.Decoder (Array Message)
-messagesDecoder = Json.array messageDecoder
+messagesDecoder : Json.Decoder (List Message)
+messagesDecoder = Json.list messageDecoder
 
 
 messageDecoder : Json.Decoder Message
@@ -36,16 +35,16 @@ messageDecoder =
     ("message" := Json.string)
 
 
-queryHandler : Task String (Array Message) -> Task x ()
+queryHandler : Task String (List Message) -> Task x ()
 queryHandler task = andThen (Task.toResult task) sendAction
 
 
-sendAction : Result String (Array Message) -> Task x ()
+sendAction : Result String (List Message) -> Task x ()
 sendAction =
   Signal.send (Signal.forwardTo currentMessages.address toAction)
 
 
-toAction : Result String (Array Message) -> Action
+toAction : Result String (List Message) -> Action
 toAction r =
   case r of
     Ok msgs -> Incoming msgs

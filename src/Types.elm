@@ -8,7 +8,7 @@ type Action
   = SendMessage Message
   | Input String
   | SetName String
-  | Incoming (Array Message)
+  | Incoming (List Message)
   | NoOp
 
 
@@ -17,7 +17,7 @@ type alias Message
 
 
 type alias Chat =
-  { messages: Array Message
+  { messages: List Message
   , field: String
   , name: String
   }
