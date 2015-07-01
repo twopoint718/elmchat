@@ -1,4 +1,5 @@
 ![Screenshot](images/screenshot.png "Screenshot")
+_Design by: @missingdink_
 
 # ElmChat
 
