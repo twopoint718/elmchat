@@ -16,7 +16,7 @@ import Api exposing
   )
 import Model exposing (model)
 import Update exposing (update)
-import Types exposing (Action(NoOp), Chat)
+import Types exposing (Action(NoOp, SendMessage), Chat)
 import View exposing (view)
 
 

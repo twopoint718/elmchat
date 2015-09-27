@@ -2,7 +2,6 @@ module View where
 
 
 import Array
-import Bootstrap.Html exposing (..)
 import Html exposing (..)
 import Html.Attributes as A
 import Html.Events as E
@@ -71,8 +70,7 @@ inputControls address model =
         ]
         []
       ]
-    , btnPrimary_
-      { btnParam | label <- Just "Send" }
+    , btnPrimary_ "Send"
       outgoingMessages.address (mkMessage model |> SendMessage)
     ]
   ]
@@ -116,3 +114,27 @@ stylesheet href =
     [ A.rel "stylesheet"
     , A.href href
     ] []
+
+
+-- From Bootstrap
+
+
+row_ : List Html -> Html
+row_ = div [ A.class "row" ]
+
+
+container_ : List Html -> Html
+container_ = div [ A.class "container" ]
+
+
+formGroup_ : List Html -> Html
+formGroup_ = div [ A.class "form-group" ]
+
+
+btnPrimary_ : String -> Address a -> a -> Html
+btnPrimary_ label addr x =
+  button
+  [ A.class "btn btn-primary"
+  , E.onClick addr x
+  ]
+  [ text label ]
