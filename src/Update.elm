@@ -11,15 +11,15 @@ update : Action -> Chat -> Chat
 update action model =
   case action of
     SendMessage msg ->
-      { model | field <- "" }
+      { model | field = "" }
 
     Incoming msgs ->
-      { model | messages <- msgs }
+      { model | messages = msgs }
 
     Input say ->
-      { model | field <- say }
+      { model | field = say }
 
     SetName name ->
-      { model | name <- name }
+      { model | name = name }
 
     NoOp -> model
