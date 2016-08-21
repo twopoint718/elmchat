@@ -1,23 +1,26 @@
-module Types where
+module Types exposing (Msg(..), Chat, ChatMessage)
 
 
 import Array exposing (Array)
 
 
-type Action
-  = SendMessage Message
+type Msg
+  = SendMessage ChatMessage
+  | Incoming (List ChatMessage)
   | Input String
-  | SetName String
-  | Incoming (List Message)
   | NoOp
+  | PollMessages
+  | SetName String
+  | ShowError String
 
 
-type alias Message
+type alias ChatMessage
   = { name: String, message: String }
 
 
 type alias Chat =
-  { messages: List Message
-  , field: String
-  , name: String
+  { messages : List ChatMessage
+  , errorMessage : String
+  , field : String
+  , name : String
   }

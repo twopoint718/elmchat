@@ -1,4 +1,4 @@
-module View where
+module View exposing (..)
 
 
 import Array
@@ -7,15 +7,13 @@ import Html.Attributes as A
 import Html.Events as E
 import Html.Shorthand exposing (..)
 import Json.Decode as Json
-import Signal exposing (Address)
+
+import Api
+import Types exposing (Msg(..), Chat, ChatMessage)
 
 
-import Api exposing (outgoingMessages)
-import Types exposing (Action(..), Chat, Message)
-
-
-view : Address Action -> Chat -> Html
-view address model =
+view : Chat -> Html Msg
+view model =
   container_
   [ stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
   , stylesheet "css/style.css"
@@ -27,12 +25,14 @@ view address model =
   , img [A.src "images/joan.png"]
     []
   , h1_ "Can We Talk!?"
-  , row_ [ inputControls address model ]
+  , row_ [ displayErrors model ]
+  , row_ [ inputControls model ]
   , row_ [ messageList model ]
   ]
 
-inputControls : Address Action -> Chat -> Html
-inputControls address model =
+
+inputControls : Chat -> Html Msg
+inputControls model =
   fieldset []
   [ legend_ "Add Message"
   , form
@@ -50,7 +50,7 @@ inputControls address model =
         , A.class "form-control"
         , A.class "col-sm-2"
         , A.placeholder "Your Name"
-        , E.on "input" E.targetValue (Signal.message address << SetName)
+        , E.onInput SetName
         ]
         []
       ]
@@ -65,30 +65,34 @@ inputControls address model =
         , A.class "col-sm-9"
         , A.placeholder "Enter a message"
         , A.value model.field
-        , E.on "input" E.targetValue (Signal.message address << Input)
-        , E.onKeyUp outgoingMessages.address (mkMessage model |> sendMessage)
+        , E.onInput Input
         ]
         []
       ]
-    , btnPrimary_ "Send"
-      outgoingMessages.address (mkMessage model |> SendMessage)
+    , btnPrimary_ "Send" (mkMessage model |> SendMessage)
     ]
   ]
 
 
-mkMessage : Chat -> Message
+displayErrors : Chat -> Html a
+displayErrors model = p
+    [ A.class "text-danger" ]
+    [ text model.errorMessage ]
+
+
+mkMessage : Chat -> ChatMessage
 mkMessage m =
   { name = m.name
   , message = m.field
   }
 
 
-sendMessage : Message -> Int -> Action
-sendMessage msg key =
+sendMessageOnEnter : Int -> ChatMessage ->  Msg
+sendMessageOnEnter key msg =
   if key == 13 then SendMessage msg else NoOp
 
 
-messageList : Chat -> Html
+messageList : Chat -> Html a
 messageList model =
   let msgRow msg =
         tr_
@@ -108,7 +112,7 @@ messageList model =
         ]
 
 
-stylesheet : String -> Html
+stylesheet : String -> Html a
 stylesheet href =
   node "link"
     [ A.rel "stylesheet"
@@ -119,22 +123,27 @@ stylesheet href =
 -- From Bootstrap
 
 
-row_ : List Html -> Html
+row_ : List (Html a) -> Html a
 row_ = div [ A.class "row" ]
 
 
-container_ : List Html -> Html
+container_ : List (Html a) -> Html a
 container_ = div [ A.class "container" ]
 
 
-formGroup_ : List Html -> Html
+formGroup_ : List (Html a) -> Html a
 formGroup_ = div [ A.class "form-group" ]
 
 
-btnPrimary_ : String -> Address a -> a -> Html
-btnPrimary_ label addr x =
+btnPrimary_ : String -> a -> Html a
+btnPrimary_ label x =
   button
   [ A.class "btn btn-primary"
-  , E.onClick addr x
+  , E.onClick x
   ]
   [ text label ]
+
+
+onKeyUp : (Int -> msg) -> Attribute msg
+onKeyUp tagger =
+  E.on "keyup" (Json.map tagger E.keyCode)

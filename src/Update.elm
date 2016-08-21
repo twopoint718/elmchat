@@ -1,25 +1,42 @@
-module Update where
+module Update exposing (..)
 
 
-import Signal exposing (Address)
+import Api
+import Task
+import Types exposing (Msg(..), Chat, ChatMessage)
 
 
-import Types exposing (Action(..), Chat)
-
-
-update : Action -> Chat -> Chat
-update action model =
-  case action of
+update : Msg -> Chat -> (Chat, Cmd Msg)
+update msg model =
+  case msg of
     SendMessage msg ->
-      { model | field = "" }
+      ( { model | field = "" }
+      , Api.sendMessage msg
+      )
 
     Incoming msgs ->
-      { model | messages = msgs }
+      ( { model | messages = msgs, errorMessage = "" }
+      , Cmd.none
+      )
+
+    PollMessages ->
+      ( model
+      , Api.pollMessages
+      )
 
     Input say ->
-      { model | field = say }
+      ( { model | field = say }
+      , Cmd.none
+      )
 
     SetName name ->
-      { model | name = name }
+      ( { model | name = name }
+      , Cmd.none
+      )
 
-    NoOp -> model
+    ShowError err ->
+      ( { model | errorMessage = err }
+      , Cmd.none
+      )
+
+    NoOp -> (model, Cmd.none)

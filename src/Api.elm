@@ -1,14 +1,16 @@
-module Api where
+module Api exposing (pollMessages, sendMessage)
 
 
-import Http exposing (RawError, Response, defaultSettings, get, send)
+import Dict
+import Http exposing (Error, Response, RawError(RawNetworkError))
 import Json.Decode as Json exposing ((:=))
 import Json.Encode exposing (Value, encode, object, string)
-import Task exposing (..)
-import Time exposing (every, second)
+import Task exposing (Task)
 
-
-import Types exposing (Message, Action(Incoming,NoOp))
+import Types exposing
+  ( ChatMessage
+  , Msg(Incoming, PollMessages, ShowError)
+  )
 
 
 endpoint : String
@@ -18,63 +20,50 @@ endpoint = "http://localhost:3000/messages"
 -- GET
 
 
-getMessages : Task String (List Message)
+pollMessages : Cmd Msg
+pollMessages =
+  Task.perform onError onReceive getMessages
+
+
+getMessages : Task Http.Error (List ChatMessage)
 getMessages =
-  get messagesDecoder endpoint
-    |> Task.mapError toString
+  Http.get messagesDecoder endpoint
 
 
-messagesDecoder : Json.Decoder (List Message)
+messagesDecoder : Json.Decoder (List ChatMessage)
 messagesDecoder = Json.list messageDecoder
 
 
-messageDecoder : Json.Decoder Message
+messageDecoder : Json.Decoder ChatMessage
 messageDecoder =
   Json.object2 (\name message -> { name = name, message = message })
     ("name" := Json.string)
     ("message" := Json.string)
 
 
-queryHandler : Task String (List Message) -> Task x ()
-queryHandler task = andThen (Task.toResult task) sendAction
-
-
-sendAction : Result String (List Message) -> Task x ()
-sendAction =
-  Signal.send (Signal.forwardTo currentMessages.address toAction)
-
-
-toAction : Result String (List Message) -> Action
-toAction r =
-  case r of
-    Ok msgs -> Incoming msgs
-    Err _ -> NoOp
-
-
-currentMessages : Signal.Mailbox Action
-currentMessages =
-  Signal.mailbox NoOp
-
-
 -- POST
 
 
-postMessage : Message -> Task String Response
+sendMessage : ChatMessage -> Cmd Msg
+sendMessage msg =
+  Task.perform onError onSent (postMessage msg)
+
+
+postMessage : ChatMessage -> Task RawError ()
 postMessage msg =
-  always "POST failed"
-  `mapError`
-  send defaultSettings
+  Http.send Http.defaultSettings
     { verb = "POST"
     , headers = []
     , url = endpoint
     , body =
-      messageEncoder msg
-        |> encode 0
-        |> Http.string
+        messageEncoder msg
+          |> encode 0
+          |> Http.string
     }
+    `Task.andThen` handlePostResponse
 
 
-messageEncoder : Message -> Json.Value
+messageEncoder : ChatMessage -> Json.Value
 messageEncoder msg =
   object
     [ ("name", string msg.name)
@@ -82,6 +71,29 @@ messageEncoder msg =
     ]
 
 
-outgoingMessages : Signal.Mailbox Action
-outgoingMessages =
-  Signal.mailbox NoOp
+-- Response handlers
+
+
+onError : err -> Msg
+onError err = ShowError (toString err)
+
+
+-- About the weird type... if we get here then the Http POST worked, now
+-- we just refresh messages so the person posting can see their new message.
+onSent : () -> Msg
+onSent _ = PollMessages
+
+
+handlePostResponse : Response -> Task RawError ()
+handlePostResponse resp =
+  case Dict.get "Location" resp.headers of
+    Nothing ->
+      Task.fail RawNetworkError
+
+    Just _ ->
+      Task.succeed ()
+
+
+onReceive : List ChatMessage -> Msg
+onReceive msgs =
+    Incoming msgs
