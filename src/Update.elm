@@ -21,7 +21,9 @@ update msg model =
 
     PollMessages ->
       ( model
-      , Api.fetchMessages Incoming
+      , Api.fetchMessages
+          |> RemoteData.asCmd
+          |> Cmd.map Incoming
       )
 
     Input say ->
