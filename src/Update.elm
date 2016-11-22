@@ -20,7 +20,7 @@ update msg model =
 
     PollMessages ->
       ( model
-      , Api.pollMessages Incoming
+      , Api.fetchMessages Incoming
       )
 
     Input say ->
