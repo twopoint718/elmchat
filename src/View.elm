@@ -8,9 +8,10 @@ import Html.Events exposing (..)
 import RemoteData exposing (WebData, RemoteData(..))
 
 import Api
-import Types exposing (Msg(..), Chat, ChatMessage)
+import Types exposing (Msg(..))
+import Model exposing (Model, ChatMessage)
 
-view : Chat -> Html Msg
+view : Model -> Html Msg
 view model =
   div [ class "container" ]
     [ stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
@@ -24,7 +25,7 @@ view model =
     ]
 
 
-inputControls : Chat -> Html Msg
+inputControls : Model -> Html Msg
 inputControls model =
   fieldset []
     [ legend [] [ text "Add Message" ]
@@ -70,7 +71,7 @@ displayErrors messages =
     p [ class "text-danger" ] content
 
 
-mkMessage : Chat -> ChatMessage
+mkMessage : Model -> ChatMessage
 mkMessage m =
   { name = m.name
   , message = m.saying
@@ -82,7 +83,7 @@ sendMessageOnEnter key msg =
   if key == 13 then SendMessage msg else NoOp
 
 
-messageList : Chat -> Html a
+messageList : Model -> Html a
 messageList model =
   table
     [ class "table col-xs-10 table-striped" ]

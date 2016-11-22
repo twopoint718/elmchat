@@ -1,11 +1,19 @@
 module Model exposing (..)
 
-import RemoteData exposing (RemoteData(..))
+import RemoteData exposing (RemoteData(..), WebData)
 
-import Types exposing (Chat)
+type alias ChatMessage
+  = { name: String, message: String }
 
 
-model : Chat
+type alias Model =
+  { messages : WebData (List ChatMessage)
+  , errorMessage : String
+  , saying : String
+  , name : String
+  }
+
+model : Model
 model =
   { messages = NotAsked
   , saying = ""

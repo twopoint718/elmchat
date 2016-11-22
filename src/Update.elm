@@ -4,7 +4,8 @@ module Update exposing (..)
 import Api
 import Http exposing (Request)
 import Task
-import Types exposing (Msg(..), Chat, ChatMessage)
+import Types exposing (Msg(..))
+import Model exposing (Model, ChatMessage)
 
 import RemoteData exposing (WebData, RemoteData(..))
 
@@ -15,7 +16,7 @@ requestMap msg request =
     |> RemoteData.asCmd
     |> Cmd.map msg
 
-update : Msg -> Chat -> (Chat, Cmd Msg)
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     SendMessage msg ->
@@ -49,7 +50,7 @@ update msg model =
     NoOp -> (model, Cmd.none)
 
 
-handleIncoming : Chat -> (WebData (List ChatMessage)) -> Chat
+handleIncoming : Model -> (WebData (List ChatMessage)) -> Model
 handleIncoming model msgsResult =
   case msgsResult of
     NotAsked ->

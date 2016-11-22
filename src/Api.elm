@@ -6,12 +6,16 @@ import Json.Encode as JE exposing (Value)
 
 import RemoteData exposing (WebData)
 
-import Types exposing (ChatMessage)
+import Model exposing (ChatMessage)
 
-import Api.Post exposing (post)
-import Api.Get exposing (get)
+baseUri : String
+baseUri = "http://localhost:3000/"
 
 -- GET
+
+get : String -> Decoder a -> Request a
+get path decoder =
+  Http.get (baseUri ++ path) decoder
 
 fetchMessages : Request (List ChatMessage)
 fetchMessages =
@@ -28,6 +32,15 @@ receiveDecoder =
     (JD.field "message" JD.string)
 
 -- POST
+
+type alias DontCare = JD.Value
+dontCare : JD.Decoder DontCare
+dontCare = JD.value
+
+post : String -> JE.Value -> Request DontCare
+post path msg =
+  Http.post (baseUri ++ path) (Http.jsonBody msg) dontCare
+
 
 sendMessage : ChatMessage -> Request JD.Value
 sendMessage chatMessage =
