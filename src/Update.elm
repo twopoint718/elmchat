@@ -2,21 +2,25 @@ module Update exposing (..)
 
 
 import Api
-import Http
+import Http exposing (Request)
 import Task
 import Types exposing (Msg(..), Chat, ChatMessage)
 
 import RemoteData exposing (WebData, RemoteData(..))
+
+requestMap : (WebData a -> Msg) -> Request a -> Cmd Msg
+requestMap msg request =
+  request
+    |> Http.toTask
+    |> RemoteData.asCmd
+    |> Cmd.map msg
 
 update : Msg -> Chat -> (Chat, Cmd Msg)
 update msg model =
   case msg of
     SendMessage msg ->
       ( { model | field = "" }
-      , Api.sendMessage msg
-          |> Http.toTask
-          |> RemoteData.asCmd
-          |> Cmd.map (always PollMessages)
+      , requestMap (always PollMessages) (Api.sendMessage msg)
       )
 
     Incoming msgsResult ->
@@ -24,10 +28,7 @@ update msg model =
 
     PollMessages ->
       ( model
-      , Api.fetchMessages
-          |> Http.toTask
-          |> RemoteData.asCmd
-          |> Cmd.map Incoming
+      , requestMap Incoming Api.fetchMessages
       )
 
     Input say ->
@@ -58,7 +59,10 @@ handleIncoming model msgsResult =
       model
 
     Success msgs ->
-      { model | messages = msgs, errorMessage = "" }
+      { model | messages = Success msgs, errorMessage = "" }
 
     Failure e ->
-      { model | errorMessage = toString e }
+      { model
+      | errorMessage = toString e
+      , messages = Failure e
+      }

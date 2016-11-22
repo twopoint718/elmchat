@@ -6,6 +6,7 @@ import Html exposing (..)
 import Html.Attributes as A
 import Html.Events as E
 import Json.Decode as Json
+import RemoteData exposing (WebData, RemoteData(..))
 
 import Api
 import Types exposing (Msg(..), Chat, ChatMessage)
@@ -94,23 +95,41 @@ sendMessageOnEnter key msg =
 
 messageList : Chat -> Html a
 messageList model =
-  let msgRow msg =
-        tr []
-          [ td [] [ em [] [ text msg.name ] ]
-          , td [] [ text msg.message ]
-          ]
-  in
-      table
-        [ A.class "table col-xs-10 table-striped" ]
-        [ thead []
-          [ tr []
-            [ th [ A.class "col-xs-2" ] [ text "Name" ]
-            , th [] [ text "Message" ]
-            ]
-          ]
-        , tbody [] (List.map msgRow model.messages)
+  table
+    [ A.class "table col-xs-10 table-striped" ]
+    [ thead []
+      [ tr []
+        [ th [ A.class "col-xs-2" ] [ text "Name" ]
+        , th [] [ text "Message" ]
         ]
+      ]
+    , tbody [] (perhapsMessages model.messages)
+    ]
 
+msgRow : ChatMessage -> Html a
+msgRow msg =
+  tr []
+    [ td [] [ em [] [ text msg.name ] ]
+    , td [] [ text msg.message ]
+    ]
+
+perhapsMessages : WebData (List ChatMessage) -> List (Html a)
+perhapsMessages msgs =
+  case msgs of
+    NotAsked ->
+      [ tr []
+          [ td [] [ text "not loaded" ] ]
+      ]
+    Loading ->
+      [ tr []
+          [ td [] [ text "loading" ] ]
+      ]
+
+    Failure e ->
+      []
+
+    Success messages ->
+      List.map msgRow messages
 
 stylesheet : String -> Html a
 stylesheet href =

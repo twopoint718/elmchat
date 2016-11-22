@@ -3,7 +3,7 @@ module Types exposing (Msg(..), Chat, ChatMessage)
 
 import Http
 
-import RemoteData exposing (WebData)
+import RemoteData exposing (WebData, RemoteData)
 
 type Msg
   = SendMessage ChatMessage
@@ -20,7 +20,7 @@ type alias ChatMessage
 
 
 type alias Chat =
-  { messages : List ChatMessage
+  { messages : WebData (List ChatMessage)
   , errorMessage : String
   , field : String
   , name : String
