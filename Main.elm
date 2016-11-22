@@ -13,12 +13,12 @@ import Task
 prefetchMessages : Cmd Msg
 prefetchMessages =
   Task.perform
-    (\_->PollMessages)
+    (always PollMessages)
     (Task.succeed ())
 
 
+init : (Chat, Cmd Msg)
 init = (model, prefetchMessages)
-
 
 messageSubscription : Chat -> Sub Msg
 messageSubscription _ =
