@@ -12,7 +12,7 @@ update msg model =
   case msg of
     SendMessage msg ->
       ( { model | field = "" }
-      , Api.sendMessage (\_->PollMessages) msg
+      , Api.sendMessage msg (\_->PollMessages)
       )
 
     Incoming msgsResult ->

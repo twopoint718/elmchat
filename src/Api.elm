@@ -1,65 +1,48 @@
 module Api exposing (fetchMessages, sendMessage)
 
-
-import Http exposing (Error, Response, Request, Body)
-import Json.Decode as Json exposing (field)
-import Json.Encode exposing (Value, encode, object, string)
-import Task exposing (Task)
+import Http exposing (Error)
+import Json.Decode as JD exposing (Decoder)
+import Json.Encode as JE exposing (Value)
 
 import Types exposing (ChatMessage)
 
-type alias DontCare = Json.Value
-dontCare : Json.Decoder DontCare
-dontCare = Json.value
+import Api.Post
+import Api.Get
 
 endpoint : String
-endpoint = "http://localhost:3000/messages"
+endpoint = "http://localhost:3000/"
 
+get : String -> Decoder a -> (Result Error a -> msg) -> Cmd msg
+get path =
+  Api.Get.get (endpoint ++ path)
 
--- GET
+post : String -> JD.Value -> (Result Error JD.Value -> msg) -> Cmd msg
+post path =
+  Api.Post.post (endpoint ++ path)
 
 fetchMessages : (Result Error (List ChatMessage) -> msg) -> Cmd msg
-fetchMessages callback =
-  Http.send callback fetchMessagesRequest
+fetchMessages =
+  get "messages" incomingMessagesDecoder
 
-
-fetchMessagesRequest : Request (List ChatMessage)
-fetchMessagesRequest =
-  Http.get endpoint incomingMessagesDecoder
-
-
-incomingMessagesDecoder : Json.Decoder (List ChatMessage)
+incomingMessagesDecoder : Decoder (List ChatMessage)
 incomingMessagesDecoder =
-  Json.list messageDecoder
+  JD.list receiveDecoder
 
 
-messageDecoder : Json.Decoder ChatMessage
-messageDecoder =
-  Json.map2 (\name message -> ChatMessage name message)
-    (field "name" Json.string)
-    (field "message" Json.string)
+receiveDecoder : Decoder ChatMessage
+receiveDecoder =
+  JD.map2 (\name message -> ChatMessage name message)
+    (JD.field "name" JD.string)
+    (JD.field "message" JD.string)
+
+sendMessage : ChatMessage -> (Result Error JD.Value -> msg) -> Cmd msg
+sendMessage chatMessage =
+  post "messages" (sendEncoder chatMessage)
 
 
--- POST
-
-sendMessage : (Result Error Json.Value -> msg) -> ChatMessage -> Cmd msg
-sendMessage callback msg =
-  Http.send callback <| sendMessageRequest msg
-
-
-sendMessageRequest : ChatMessage -> Request DontCare
-sendMessageRequest msg =
-  Http.post endpoint (bodyForSending msg) dontCare
-
-
-bodyForSending : ChatMessage -> Body
-bodyForSending msg =
-  Http.jsonBody <| messageEncoder msg
-
-
-messageEncoder : ChatMessage -> Json.Value
-messageEncoder msg =
-  object
-    [ ("name", string msg.name)
-    , ("message", string msg.message)
+sendEncoder : ChatMessage -> JE.Value
+sendEncoder msg =
+  JE.object
+    [ ("name", JE.string msg.name)
+    , ("message", JE.string msg.message)
     ]
