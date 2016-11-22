@@ -1,16 +1,12 @@
 module Api exposing (pollMessages, sendMessage)
 
 
-import Dict
 import Http exposing (Error, Response, Request)
 import Json.Decode as Json exposing (field)
 import Json.Encode exposing (Value, encode, object, string)
 import Task exposing (Task)
 
-import Types exposing
-  ( ChatMessage
-  , Msg(Incoming, PollMessages, ShowError)
-  )
+import Types exposing (ChatMessage)
 
 
 endpoint : String
@@ -20,15 +16,13 @@ endpoint = "http://localhost:3000/messages"
 -- GET
 
 
-pollMessages : (Result Error (List ChatMessage) -> Msg) -> Cmd Msg
+pollMessages : (Result Error (List ChatMessage) -> msg) -> Cmd msg
 pollMessages callback =
-  --Task.perform onError onReceive getMessages
   Http.send callback getMessagesRequest
 
 getMessagesRequest : Request (List ChatMessage)
 getMessagesRequest =
   Http.get endpoint incomingMessagesDecoder
-  --Http.get messagesDecoder endpoint
 
 
 incomingMessagesDecoder : Json.Decoder (List ChatMessage)
@@ -46,24 +40,10 @@ messageDecoder =
 -- POST
 
 
-sendMessage : (Result Error Json.Value -> Msg) -> ChatMessage -> Cmd Msg
+sendMessage : (Result Error Json.Value -> msg) -> ChatMessage -> Cmd msg
 sendMessage callback msg =
-  --Task.perform onError onSent (postMessage msg)
   Http.send callback <| requestForPostMessage msg
 
-
--- postMessage : ChatMessage -> Task RawError ()
--- postMessage msg =
---   Http.send Http.defaultSettings
---     { verb = "POST"
---     , headers = []
---     , url = endpoint
---     , body =
---         messageEncoder msg
---           |> encode 0
---           |> Http.string
---     }
---     |> Task.andThen handlePostResponse
 
 requestForPostMessage : ChatMessage -> Request Json.Value
 requestForPostMessage msg =
@@ -79,16 +59,3 @@ messageEncoder msg =
     [ ("name", string msg.name)
     , ("message", string msg.message)
     ]
-
-
--- Response handlers
-
-
-onError : err -> Msg
-onError err = ShowError (toString err)
-
-
--- About the weird type... if we get here then the Http POST worked, now
--- we just refresh messages so the person posting can see their new message.
-onSent : () -> Msg
-onSent _ = PollMessages
