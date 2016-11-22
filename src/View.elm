@@ -3,82 +3,71 @@ module View exposing (..)
 
 import Array
 import Html exposing (..)
-import Html.Attributes as A
-import Html.Events as E
-import Json.Decode as Json
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import RemoteData exposing (WebData, RemoteData(..))
 
 import Api
 import Types exposing (Msg(..), Chat, ChatMessage)
 
-
 view : Chat -> Html Msg
 view model =
-  container_
-  [ stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
-  , stylesheet "css/style.css"
-  , node "link"
-    [ A.href "http://fonts.googleapis.com/css?family=Special+Elite"
-    , A.rel "stylesheet"
+  div [ class "container" ]
+    [ stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
+    , stylesheet "css/style.css"
+    , stylesheet "http://fonts.googleapis.com/css?family=Special+Elite"
+    , img [src "images/joan.png"] []
+    , h1 [] [ text "Can We Talk!?" ]
+    , row_ [ displayErrors model.messages ]
+    , row_ [ inputControls model ]
+    , row_ [ messageList model ]
     ]
-    []
-  , img [A.src "images/joan.png"]
-    []
-  , h1 [] [ text "Can We Talk!?" ]
-  , row_ [ displayErrors model ]
-  , row_ [ inputControls model ]
-  , row_ [ messageList model ]
-  ]
 
 
 inputControls : Chat -> Html Msg
 inputControls model =
   fieldset []
     [ legend [] [ text "Add Message" ]
-    , form
-      [ A.class "form-horizontal"
-      , E.onSubmit (mkMessage model |> SendMessage)
+    , Html.form
+      [ class "form-horizontal"
+      , onSubmit (mkMessage model |> SendMessage)
       ]
-      [ formGroup_
-        [ label
-          [ A.for "name"
-          , A.class "col-sm-1"
-          ]
-          [ text "Name" ]
-        , input
-          [ A.id "name"
-          , A.class "form-control"
-          , A.class "col-sm-2"
-          , A.placeholder "Your Name"
-          , E.onInput SetName
-          ]
-          []
-        ]
-      , formGroup_
-        [ label
-          [ A.for "say"
-          , A.class "col-sm-1"
-          ]
-          [ text "Say" ]
-        , input
-          [ A.id "say"
-          , A.class "col-sm-9"
-          , A.placeholder "Enter a message"
-          , A.value model.field
-          , E.onInput Input
-          ]
-          []
-        ]
+      [ formGroup_ ( labeledField "name" "Name" "Your Name" model.name SetName )
+      , formGroup_ (labeledField "say" "Say" "Enter a message" model.field Input )
       , btnPrimary_ "Send"
       ]
     ]
 
+labeledField : String -> String -> String -> String -> (String -> Msg) -> List (Html Msg)
+labeledField id_ text_ placeholder_ value_ msg_ =
+  [ label
+    [ for id_
+    , class "col-sm-1"
+    ]
+    [ text text_ ]
+  , input
+    [ id id_
+    , class "form-control col-sm-9"
+    , placeholder placeholder_
+    , value value_
+    , onInput msg_
+    ]
+    []
+  ]
 
-displayErrors : Chat -> Html a
-displayErrors model =
-  p
-    [ A.class "text-danger" ]
-    [ text model.errorMessage ]
+
+displayErrors : WebData a -> Html b
+displayErrors messages =
+  let
+      content =
+        case messages of
+          NotAsked -> []
+          Loading -> []
+          Success _ -> []
+          Failure e ->
+            [ text <| toString e ]
+  in
+    p [ class "text-danger" ] content
 
 
 mkMessage : Chat -> ChatMessage
@@ -96,10 +85,10 @@ sendMessageOnEnter key msg =
 messageList : Chat -> Html a
 messageList model =
   table
-    [ A.class "table col-xs-10 table-striped" ]
+    [ class "table col-xs-10 table-striped" ]
     [ thead []
       [ tr []
-        [ th [ A.class "col-xs-2" ] [ text "Name" ]
+        [ th [ class "col-xs-2" ] [ text "Name" ]
         , th [] [ text "Message" ]
         ]
       ]
@@ -132,10 +121,10 @@ perhapsMessages msgs =
       List.map msgRow messages
 
 stylesheet : String -> Html a
-stylesheet href =
+stylesheet href_ =
   node "link"
-    [ A.rel "stylesheet"
-    , A.href href
+    [ rel "stylesheet"
+    , href href_
     ] []
 
 
@@ -144,27 +133,17 @@ stylesheet href =
 
 row_ : List (Html a) -> Html a
 row_ =
-  div [ A.class "row" ]
-
-
-container_ : List (Html a) -> Html a
-container_ =
-  div [ A.class "container" ]
+  div [ class "row" ]
 
 
 formGroup_ : List (Html a) -> Html a
 formGroup_ =
-  div [ A.class "form-group" ]
+  div [ class "form-group" ]
 
 
 btnPrimary_ : String -> Html a
 btnPrimary_ label =
   button
-  [ A.class "btn btn-primary"
+  [ class "btn btn-primary"
   ]
   [ text label ]
-
-
-onKeyUp : (Int -> msg) -> Attribute msg
-onKeyUp tagger =
-  E.on "keyup" (Json.map tagger E.keyCode)
