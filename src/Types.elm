@@ -2,12 +2,12 @@ module Types exposing (Msg(..), Chat, ChatMessage)
 
 
 import Http
-import Array exposing (Array)
 
+import RemoteData exposing (WebData)
 
 type Msg
   = SendMessage ChatMessage
-  | Incoming (Result Http.Error (List ChatMessage))
+  | Incoming (WebData (List ChatMessage))
   | Input String
   | NoOp
   | PollMessages

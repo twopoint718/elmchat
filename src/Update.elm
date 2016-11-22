@@ -6,6 +6,7 @@ import Http
 import Task
 import Types exposing (Msg(..), Chat, ChatMessage)
 
+import RemoteData exposing (WebData, RemoteData(..))
 
 update : Msg -> Chat -> (Chat, Cmd Msg)
 update msg model =
@@ -16,7 +17,7 @@ update msg model =
       )
 
     Incoming msgsResult ->
-      handleIncoming model msgsResult
+      (handleIncoming model msgsResult) ! []
 
     PollMessages ->
       ( model
@@ -41,15 +42,17 @@ update msg model =
     NoOp -> (model, Cmd.none)
 
 
-handleIncoming : Chat -> (Result Http.Error (List ChatMessage)) -> (Chat, Cmd Msg)
+handleIncoming : Chat -> (WebData (List ChatMessage)) -> Chat
 handleIncoming model msgsResult =
   case msgsResult of
-    Ok msgs ->
-      ( { model | messages = msgs, errorMessage = "" }
-      , Cmd.none
-      )
+    NotAsked ->
+      model
 
-    Err err ->
-      ( { model | errorMessage = toString err }
-      , Cmd.none
-      )
+    Loading ->
+      model
+
+    Success msgs ->
+      { model | messages = msgs, errorMessage = "" }
+
+    Failure e ->
+      { model | errorMessage = toString e }

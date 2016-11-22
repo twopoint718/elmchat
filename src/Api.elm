@@ -4,6 +4,8 @@ import Http exposing (Error)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE exposing (Value)
 
+import RemoteData exposing (WebData)
+
 import Types exposing (ChatMessage)
 
 import Api.Post
@@ -12,15 +14,9 @@ import Api.Get
 endpoint : String
 endpoint = "http://localhost:3000/"
 
-get : String -> Decoder a -> (Result Error a -> msg) -> Cmd msg
-get path =
-  Api.Get.get (endpoint ++ path)
+-- GET
 
-post : String -> JD.Value -> (Result Error JD.Value -> msg) -> Cmd msg
-post path =
-  Api.Post.post (endpoint ++ path)
-
-fetchMessages : (Result Error (List ChatMessage) -> msg) -> Cmd msg
+fetchMessages : (WebData (List ChatMessage) -> msg) -> Cmd msg
 fetchMessages =
   get "messages" incomingMessagesDecoder
 
@@ -28,14 +24,23 @@ incomingMessagesDecoder : Decoder (List ChatMessage)
 incomingMessagesDecoder =
   JD.list receiveDecoder
 
-
 receiveDecoder : Decoder ChatMessage
 receiveDecoder =
   JD.map2 (\name message -> ChatMessage name message)
     (JD.field "name" JD.string)
     (JD.field "message" JD.string)
 
-sendMessage : ChatMessage -> (Result Error JD.Value -> msg) -> Cmd msg
+get : String -> Decoder a -> (WebData a -> msg) -> Cmd msg
+get path =
+  Api.Get.get (endpoint ++ path)
+
+-- POST
+
+post : String -> JD.Value -> (WebData JD.Value -> msg) -> Cmd msg
+post path =
+  Api.Post.post (endpoint ++ path)
+
+sendMessage : ChatMessage -> (WebData JD.Value -> msg) -> Cmd msg
 sendMessage chatMessage =
   post "messages" (sendEncoder chatMessage)
 
