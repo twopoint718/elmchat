@@ -8,9 +8,16 @@ import Model exposing (model)
 import Update exposing (update)
 import View exposing (view)
 import Types exposing (Chat, Msg(PollMessages))
+import Task
+
+prefetchMessages : Cmd Msg
+prefetchMessages =
+  Task.perform
+    (\_->PollMessages)
+    (Task.succeed ())
 
 
-init = (model, Cmd.none)
+init = (model, prefetchMessages)
 
 
 messageSubscription : Chat -> Sub Msg
