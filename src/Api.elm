@@ -2,8 +2,8 @@ module Api exposing (pollMessages, sendMessage)
 
 
 import Dict
-import Http exposing (Error, Response, RawError(RawNetworkError))
-import Json.Decode as Json exposing ((:=))
+import Http exposing (Error, Response, Request)
+import Json.Decode as Json exposing (field)
 import Json.Encode exposing (Value, encode, object, string)
 import Task exposing (Task)
 
@@ -20,48 +20,58 @@ endpoint = "http://localhost:3000/messages"
 -- GET
 
 
-pollMessages : Cmd Msg
-pollMessages =
-  Task.perform onError onReceive getMessages
+pollMessages : (Result Error (List ChatMessage) -> Msg) -> Cmd Msg
+pollMessages callback =
+  --Task.perform onError onReceive getMessages
+  Http.send callback getMessagesRequest
+
+getMessagesRequest : Request (List ChatMessage)
+getMessagesRequest =
+  Http.get endpoint incomingMessagesDecoder
+  --Http.get messagesDecoder endpoint
 
 
-getMessages : Task Http.Error (List ChatMessage)
-getMessages =
-  Http.get messagesDecoder endpoint
-
-
-messagesDecoder : Json.Decoder (List ChatMessage)
-messagesDecoder = Json.list messageDecoder
+incomingMessagesDecoder : Json.Decoder (List ChatMessage)
+incomingMessagesDecoder =
+  Json.list messageDecoder
 
 
 messageDecoder : Json.Decoder ChatMessage
 messageDecoder =
-  Json.object2 (\name message -> { name = name, message = message })
-    ("name" := Json.string)
-    ("message" := Json.string)
+  Json.map2 (\name message -> { name = name, message = message })
+    (field "name" Json.string)
+    (field "message" Json.string)
 
 
 -- POST
 
 
-sendMessage : ChatMessage -> Cmd Msg
-sendMessage msg =
-  Task.perform onError onSent (postMessage msg)
+sendMessage : (Result Error Json.Value -> Msg) -> ChatMessage -> Cmd Msg
+sendMessage callback msg =
+  --Task.perform onError onSent (postMessage msg)
+  Http.send callback <| requestForPostMessage msg
 
 
-postMessage : ChatMessage -> Task RawError ()
-postMessage msg =
-  Http.send Http.defaultSettings
-    { verb = "POST"
-    , headers = []
-    , url = endpoint
-    , body =
-        messageEncoder msg
-          |> encode 0
-          |> Http.string
-    }
-    `Task.andThen` handlePostResponse
+-- postMessage : ChatMessage -> Task RawError ()
+-- postMessage msg =
+--   Http.send Http.defaultSettings
+--     { verb = "POST"
+--     , headers = []
+--     , url = endpoint
+--     , body =
+--         messageEncoder msg
+--           |> encode 0
+--           |> Http.string
+--     }
+--     |> Task.andThen handlePostResponse
 
+requestForPostMessage : ChatMessage -> Request Json.Value
+requestForPostMessage msg =
+  Http.post endpoint (bodyForSending msg) Json.value
+
+bodyForSending : ChatMessage -> Http.Body
+bodyForSending msg =
+  Http.jsonBody <| messageEncoder msg
 
 messageEncoder : ChatMessage -> Json.Value
 messageEncoder msg =
@@ -82,18 +92,3 @@ onError err = ShowError (toString err)
 -- we just refresh messages so the person posting can see their new message.
 onSent : () -> Msg
 onSent _ = PollMessages
-
-
-handlePostResponse : Response -> Task RawError ()
-handlePostResponse resp =
-  case Dict.get "Location" resp.headers of
-    Nothing ->
-      Task.fail RawNetworkError
-
-    Just _ ->
-      Task.succeed ()
-
-
-onReceive : List ChatMessage -> Msg
-onReceive msgs =
-    Incoming msgs

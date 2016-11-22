@@ -5,7 +5,6 @@ import Array
 import Html exposing (..)
 import Html.Attributes as A
 import Html.Events as E
-import Html.Shorthand exposing (..)
 import Json.Decode as Json
 
 import Api
@@ -24,7 +23,7 @@ view model =
     []
   , img [A.src "images/joan.png"]
     []
-  , h1_ "Can We Talk!?"
+  , h1 [] [ text "Can We Talk!?" ]
   , row_ [ displayErrors model ]
   , row_ [ inputControls model ]
   , row_ [ messageList model ]
@@ -34,7 +33,7 @@ view model =
 inputControls : Chat -> Html Msg
 inputControls model =
   fieldset []
-  [ legend_ "Add Message"
+  [ legend [] [ text "Add Message" ]
   , form
     [ A.class "form-horizontal"
     , A.action "#"
@@ -75,7 +74,8 @@ inputControls model =
 
 
 displayErrors : Chat -> Html a
-displayErrors model = p
+displayErrors model =
+  p
     [ A.class "text-danger" ]
     [ text model.errorMessage ]
 
@@ -95,20 +95,20 @@ sendMessageOnEnter key msg =
 messageList : Chat -> Html a
 messageList model =
   let msgRow msg =
-        tr_
-          [ td_ [ em_ msg.name ]
-          , td_ [ text msg.message ]
+        tr []
+          [ td [] [ em [] [ text msg.name ] ]
+          , td [] [ text msg.message ]
           ]
   in
       table
         [ A.class "table col-xs-10 table-striped" ]
-        [ thead_
-          [ tr_
+        [ thead []
+          [ tr []
             [ th [ A.class "col-xs-2" ] [ text "Name" ]
-            , th_ [ text "Message" ]
+            , th [] [ text "Message" ]
             ]
           ]
-        , tbody_ (List.map msgRow model.messages)
+        , tbody [] (List.map msgRow model.messages)
         ]
 
 
@@ -124,15 +124,18 @@ stylesheet href =
 
 
 row_ : List (Html a) -> Html a
-row_ = div [ A.class "row" ]
+row_ =
+  div [ A.class "row" ]
 
 
 container_ : List (Html a) -> Html a
-container_ = div [ A.class "container" ]
+container_ =
+  div [ A.class "container" ]
 
 
 formGroup_ : List (Html a) -> Html a
-formGroup_ = div [ A.class "form-group" ]
+formGroup_ =
+  div [ A.class "form-group" ]
 
 
 btnPrimary_ : String -> a -> Html a
