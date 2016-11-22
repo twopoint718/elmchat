@@ -33,44 +33,44 @@ view model =
 inputControls : Chat -> Html Msg
 inputControls model =
   fieldset []
-  [ legend [] [ text "Add Message" ]
-  , form
-    [ A.class "form-horizontal"
-    , A.action "#"
-    ]
-    [ formGroup_
-      [ label
-        [ A.for "name"
-        , A.class "col-sm-1"
-        ]
-        [ text "Name" ]
-      , input
-        [ A.id "name"
-        , A.class "form-control"
-        , A.class "col-sm-2"
-        , A.placeholder "Your Name"
-        , E.onInput SetName
-        ]
-        []
+    [ legend [] [ text "Add Message" ]
+    , form
+      [ A.class "form-horizontal"
+      , E.onSubmit (mkMessage model |> SendMessage)
       ]
-    , formGroup_
-      [ label
-        [ A.for "say"
-        , A.class "col-sm-1"
+      [ formGroup_
+        [ label
+          [ A.for "name"
+          , A.class "col-sm-1"
+          ]
+          [ text "Name" ]
+        , input
+          [ A.id "name"
+          , A.class "form-control"
+          , A.class "col-sm-2"
+          , A.placeholder "Your Name"
+          , E.onInput SetName
+          ]
+          []
         ]
-        [ text "Say" ]
-      , input
-        [ A.id "say"
-        , A.class "col-sm-9"
-        , A.placeholder "Enter a message"
-        , A.value model.field
-        , E.onInput Input
+      , formGroup_
+        [ label
+          [ A.for "say"
+          , A.class "col-sm-1"
+          ]
+          [ text "Say" ]
+        , input
+          [ A.id "say"
+          , A.class "col-sm-9"
+          , A.placeholder "Enter a message"
+          , A.value model.field
+          , E.onInput Input
+          ]
+          []
         ]
-        []
+      , btnPrimary_ "Send"
       ]
-    , btnPrimary_ "Send" (mkMessage model |> SendMessage)
     ]
-  ]
 
 
 displayErrors : Chat -> Html a
@@ -138,11 +138,10 @@ formGroup_ =
   div [ A.class "form-group" ]
 
 
-btnPrimary_ : String -> a -> Html a
-btnPrimary_ label x =
+btnPrimary_ : String -> Html a
+btnPrimary_ label =
   button
   [ A.class "btn btn-primary"
-  , E.onClick x
   ]
   [ text label ]
 
