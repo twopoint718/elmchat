@@ -22,6 +22,6 @@ type alias ChatMessage
 type alias Chat =
   { messages : WebData (List ChatMessage)
   , errorMessage : String
-  , field : String
+  , saying : String
   , name : String
   }

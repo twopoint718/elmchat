@@ -33,7 +33,7 @@ inputControls model =
       , onSubmit (mkMessage model |> SendMessage)
       ]
       [ formGroup_ ( labeledField "name" "Name" "Your Name" model.name SetName )
-      , formGroup_ (labeledField "say" "Say" "Enter a message" model.field Input )
+      , formGroup_ (labeledField "say" "Say" "Enter a message" model.saying Input )
       , btnPrimary_ "Send"
       ]
     ]
@@ -73,7 +73,7 @@ displayErrors messages =
 mkMessage : Chat -> ChatMessage
 mkMessage m =
   { name = m.name
-  , message = m.field
+  , message = m.saying
   }
 
 
@@ -118,7 +118,10 @@ perhapsMessages msgs =
       []
 
     Success messages ->
-      List.map msgRow messages
+      messages
+        |> List.reverse
+        |> List.take 30
+        |> List.map msgRow
 
 stylesheet : String -> Html a
 stylesheet href_ =

@@ -19,7 +19,7 @@ update : Msg -> Chat -> (Chat, Cmd Msg)
 update msg model =
   case msg of
     SendMessage msg ->
-      ( { model | field = "" }
+      ( { model | saying = "" }
       , requestMap (always PollMessages) (Api.sendMessage msg)
       )
 
@@ -32,7 +32,7 @@ update msg model =
       )
 
     Input say ->
-      ( { model | field = say }
+      ( { model | saying = say }
       , Cmd.none
       )
 

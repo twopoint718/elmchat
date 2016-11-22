@@ -8,7 +8,7 @@ import Types exposing (Chat)
 model : Chat
 model =
   { messages = NotAsked
-  , field = ""
+  , saying = ""
   , name = ""
   , errorMessage = ""
   }
