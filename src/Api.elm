@@ -1,23 +1,19 @@
 module Api exposing (fetchMessages, sendMessage)
 
-import Http exposing (Error)
+import Http exposing (Error, Request)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE exposing (Value)
-import Task exposing (Task)
 
 import RemoteData exposing (WebData)
 
 import Types exposing (ChatMessage)
 
-import Api.Post
-import Api.Get
-
-endpoint : String
-endpoint = "http://localhost:3000/"
+import Api.Post exposing (post)
+import Api.Get exposing (get)
 
 -- GET
 
-fetchMessages : Task Error (List ChatMessage)
+fetchMessages : Request (List ChatMessage)
 fetchMessages =
   get "messages" incomingMessagesDecoder
 
@@ -31,17 +27,9 @@ receiveDecoder =
     (JD.field "name" JD.string)
     (JD.field "message" JD.string)
 
-get : String -> Decoder a -> Task Error a
-get path =
-  Api.Get.get (endpoint ++ path)
-
 -- POST
 
-post : String -> JD.Value -> (WebData JD.Value -> msg) -> Cmd msg
-post path =
-  Api.Post.post (endpoint ++ path)
-
-sendMessage : ChatMessage -> (WebData JD.Value -> msg) -> Cmd msg
+sendMessage : ChatMessage -> Request JD.Value
 sendMessage chatMessage =
   post "messages" (sendEncoder chatMessage)
 

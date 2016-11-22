@@ -13,7 +13,10 @@ update msg model =
   case msg of
     SendMessage msg ->
       ( { model | field = "" }
-      , Api.sendMessage msg (\_->PollMessages)
+      , Api.sendMessage msg
+          |> Http.toTask
+          |> RemoteData.asCmd
+          |> Cmd.map (always PollMessages)
       )
 
     Incoming msgsResult ->
@@ -22,6 +25,7 @@ update msg model =
     PollMessages ->
       ( model
       , Api.fetchMessages
+          |> Http.toTask
           |> RemoteData.asCmd
           |> Cmd.map Incoming
       )

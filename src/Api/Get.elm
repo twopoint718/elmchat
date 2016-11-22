@@ -1,14 +1,14 @@
 module Api.Get exposing (get)
 
-import Http exposing (Error)
+import Http exposing (Error, Request)
 import Json.Decode exposing (Decoder)
-import Task exposing (Task)
 
 import RemoteData exposing (WebData)
 
+import Api.Base exposing (baseUri)
+
 -- GET
 
-get : String -> Decoder a -> Task Error a
-get endpoint decoder =
-  Http.get endpoint decoder
-    |> Http.toTask
+get : String -> Decoder a -> Request a
+get path decoder =
+  Http.get (baseUri ++ path) decoder
