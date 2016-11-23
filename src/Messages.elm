@@ -1,9 +1,9 @@
 module Messages exposing (Msg(..))
 
-import Model exposing (ChatMessage, ChatList)
+import Model exposing (..)
 
 type Msg
-  = SendMessage ChatMessage
+  = SendMessage Name Message
   | Incoming ChatList
   | Input String
   | PollMessages

@@ -1,4 +1,4 @@
-module Model exposing (Chat, ChatList, ChatMessage, model)
+module Model exposing (..)
 
 import RemoteData exposing (RemoteData(NotAsked), WebData)
 
@@ -18,7 +18,10 @@ model =
 type alias ChatList =
   WebData (List ChatMessage)
 
+type alias Name = String
+type alias Message = String
+
 type alias ChatMessage =
-  { name : String
-  , message : String
+  { name : Name
+  , message : Message
   }

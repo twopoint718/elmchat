@@ -16,7 +16,7 @@ view model =
     , stylesheet "css/style.css"
     , stylesheet "http://fonts.googleapis.com/css?family=Special+Elite"
     , row_
-      [ h1 [class "col-xs-7"] [ text "Can We Talk!?" ]
+      [ h1  [class "col-xs-7"] [ text "Can We Talk!?" ]
       , div [class "col-xs-5"] [ img [src "images/joan.png"] [] ]
       ]
     , row_ [ errors model.messages ]
@@ -26,15 +26,15 @@ view model =
 
 
 inputControls : Chat -> Html Msg
-inputControls model =
+inputControls {name,saying} =
   fieldset []
     [ legend [] [ text "Add Message" ]
     , Html.form
       [ class "form-horizontal"
-      , onSubmit (mkMessage model |> SendMessage)
+      , onSubmit <| SendMessage name saying
       ]
-      [ formGroup_ (labeledField "name" "Name" "Your Name" model.name SetName )
-      , formGroup_ (labeledField "say" "Say" "Enter a message" model.saying Input )
+      [ formGroup_ (labeledField "name" "Name" "Your Name" name SetName )
+      , formGroup_ (labeledField "say" "Say" "Enter a message" saying Input )
       , btnPrimary_ "Send"
       ]
     ]
@@ -69,13 +69,6 @@ errors messages =
             [ text <| toString e ]
   in
     p [ class "text-danger" ] content
-
-
-mkMessage : Chat -> ChatMessage
-mkMessage m =
-  { name = m.name
-  , message = m.saying
-  }
 
 
 messageList : ChatList -> Html a
