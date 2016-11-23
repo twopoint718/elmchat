@@ -1,149 +1,136 @@
-module View exposing (..)
+module View exposing (view)
 
 
-import Array
 import Html exposing (..)
-import Html.Attributes as A
-import Html.Events as E
-import Html.Shorthand exposing (..)
-import Json.Decode as Json
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
+import RemoteData exposing (WebData, RemoteData(..))
 
-import Api
-import Types exposing (Msg(..), Chat, ChatMessage)
-
+import Messages exposing (Msg(SendMessage, Input, SetName))
+import Model exposing (Chat, ChatMessage, ChatList)
 
 view : Chat -> Html Msg
 view model =
-  container_
-  [ stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
-  , stylesheet "css/style.css"
-  , node "link"
-    [ A.href "http://fonts.googleapis.com/css?family=Special+Elite"
-    , A.rel "stylesheet"
+  div [ class "container" ]
+    [ stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
+    , stylesheet "css/style.css"
+    , stylesheet "http://fonts.googleapis.com/css?family=Special+Elite"
+    , row_
+      [ h1  [class "col-xs-7"] [ text "Can We Talk!?" ]
+      , div [class "col-xs-5"] [ img [src "images/joan.png"] [] ]
+      ]
+    , row_ [ errors model.messages ]
+    , row_ [ inputControls model ]
+    , row_ [ messageList model.messages ]
     ]
-    []
-  , img [A.src "images/joan.png"]
-    []
-  , h1_ "Can We Talk!?"
-  , row_ [ displayErrors model ]
-  , row_ [ inputControls model ]
-  , row_ [ messageList model ]
-  ]
 
 
 inputControls : Chat -> Html Msg
-inputControls model =
+inputControls {name,saying} =
   fieldset []
-  [ legend_ "Add Message"
-  , form
-    [ A.class "form-horizontal"
-    , A.action "#"
-    ]
-    [ formGroup_
-      [ label
-        [ A.for "name"
-        , A.class "col-sm-1"
-        ]
-        [ text "Name" ]
-      , input
-        [ A.id "name"
-        , A.class "form-control"
-        , A.class "col-sm-2"
-        , A.placeholder "Your Name"
-        , E.onInput SetName
-        ]
-        []
+    [ legend [] [ text "Add Message" ]
+    , Html.form
+      [ class "form-horizontal"
+      , onSubmit <| SendMessage name saying
       ]
-    , formGroup_
-      [ label
-        [ A.for "say"
-        , A.class "col-sm-1"
-        ]
-        [ text "Say" ]
-      , input
-        [ A.id "say"
-        , A.class "col-sm-9"
-        , A.placeholder "Enter a message"
-        , A.value model.field
-        , E.onInput Input
-        ]
-        []
+      [ formGroup_ (labeledField "name" "Name" "Your Name" name SetName )
+      , formGroup_ (labeledField "say" "Say" "Enter a message" saying Input )
+      , btnPrimary_ "Send"
       ]
-    , btnPrimary_ "Send" (mkMessage model |> SendMessage)
     ]
+
+labeledField : String -> String -> String -> String -> (String -> Msg) -> List (Html Msg)
+labeledField id_ text_ placeholder_ value_ msg_ =
+  [ label
+    [ for id_
+    , class "col-sm-1"
+    ]
+    [ text text_ ]
+  , input
+    [ id id_
+    , class "form-control col-sm-9"
+    , placeholder placeholder_
+    , value value_
+    , onInput msg_
+    ]
+    []
   ]
 
 
-displayErrors : Chat -> Html a
-displayErrors model = p
-    [ A.class "text-danger" ]
-    [ text model.errorMessage ]
-
-
-mkMessage : Chat -> ChatMessage
-mkMessage m =
-  { name = m.name
-  , message = m.field
-  }
-
-
-sendMessageOnEnter : Int -> ChatMessage ->  Msg
-sendMessageOnEnter key msg =
-  if key == 13 then SendMessage msg else NoOp
-
-
-messageList : Chat -> Html a
-messageList model =
-  let msgRow msg =
-        tr_
-          [ td_ [ em_ msg.name ]
-          , td_ [ text msg.message ]
-          ]
+errors : WebData a -> Html b
+errors messages =
+  let
+      content =
+        case messages of
+          NotAsked -> []
+          Loading -> []
+          Success _ -> []
+          Failure e ->
+            [ text <| toString e ]
   in
-      table
-        [ A.class "table col-xs-10 table-striped" ]
-        [ thead_
-          [ tr_
-            [ th [ A.class "col-xs-2" ] [ text "Name" ]
-            , th_ [ text "Message" ]
-            ]
-          ]
-        , tbody_ (List.map msgRow model.messages)
-        ]
+    p [ class "text-danger" ] content
 
+
+messageList : ChatList -> Html a
+messageList messages =
+  case messages of
+    NotAsked ->
+      notTable "Loading..."
+    Loading ->
+      notTable "Loading..."
+    Failure e ->
+      notTable "Loading failed"
+    Success s ->
+      let
+          messages_ =
+            s
+              |> List.reverse
+              |> List.take 30
+              |> List.map msgRow
+      in
+        zebraTable
+          [ th [ class "col-xs-2" ] [ text "Name" ]
+          , th [] [ text "Message" ]
+          ] messages_
+
+msgRow : ChatMessage -> Html a
+msgRow msg =
+  tr []
+    [ td [] [ em [] [ text msg.name ] ]
+    , td [] [ text msg.message ]
+    ]
 
 stylesheet : String -> Html a
-stylesheet href =
-  node "link"
-    [ A.rel "stylesheet"
-    , A.href href
-    ] []
+stylesheet href_ =
+  node "link" [ rel "stylesheet", href href_] []
 
+notTable : String -> Html a
+notTable content =
+  div [ class "col-xs-12" ]
+    [ aside [] [ text content ]
+    ]
 
 -- From Bootstrap
 
 
 row_ : List (Html a) -> Html a
-row_ = div [ A.class "row" ]
-
-
-container_ : List (Html a) -> Html a
-container_ = div [ A.class "container" ]
+row_ =
+  div [ class "row" ]
 
 
 formGroup_ : List (Html a) -> Html a
-formGroup_ = div [ A.class "form-group" ]
+formGroup_ =
+  div [ class "form-group" ]
 
 
-btnPrimary_ : String -> a -> Html a
-btnPrimary_ label x =
-  button
-  [ A.class "btn btn-primary"
-  , E.onClick x
-  ]
-  [ text label ]
+btnPrimary_ : String -> Html a
+btnPrimary_ label =
+  button [ class "btn btn-primary" ] [ text label ]
 
-
-onKeyUp : (Int -> msg) -> Attribute msg
-onKeyUp tagger =
-  E.on "keyup" (Json.map tagger E.keyCode)
+zebraTable : List (Html a) -> List (Html a) -> Html a
+zebraTable headers bodies =
+  table
+    [ class "table col-xs-10 table-striped" ]
+    [ thead [] [ tr [] headers ]
+    , tbody [] bodies
+    ]

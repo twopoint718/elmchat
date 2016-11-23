@@ -1,42 +1,26 @@
-module Update exposing (..)
-
+module Update exposing (update)
 
 import Api
-import Task
-import Types exposing (Msg(..), Chat, ChatMessage)
-
+import Messages exposing (Msg(..))
+import Model exposing (Chat, ChatMessage)
 
 update : Msg -> Chat -> (Chat, Cmd Msg)
 update msg model =
   case msg of
-    SendMessage msg ->
-      ( { model | field = "" }
-      , Api.sendMessage msg
-      )
+    SendMessage name saying ->
+      let
+          message = ChatMessage name saying
+      in
+         ({ model | saying = "" }, Api.sendMessage message (always PollMessages))
 
-    Incoming msgs ->
-      ( { model | messages = msgs, errorMessage = "" }
-      , Cmd.none
-      )
+    Incoming msgsResult ->
+      ({model | messages = msgsResult}, Cmd.none)
 
     PollMessages ->
-      ( model
-      , Api.pollMessages
-      )
+      (model, Api.fetchMessages Incoming)
 
     Input say ->
-      ( { model | field = say }
-      , Cmd.none
-      )
+      ({ model | saying = say }, Cmd.none)
 
     SetName name ->
-      ( { model | name = name }
-      , Cmd.none
-      )
-
-    ShowError err ->
-      ( { model | errorMessage = err }
-      , Cmd.none
-      )
-
-    NoOp -> (model, Cmd.none)
+      ({ model | name = name }, Cmd.none)

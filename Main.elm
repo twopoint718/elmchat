@@ -1,24 +1,33 @@
-module Main exposing (..)
+module Main exposing (main)
 
-
-import Html.App as App
+import Html
 import Time exposing (second, every)
 
-import Model exposing (model)
+import Model exposing (Chat, model)
 import Update exposing (update)
 import View exposing (view)
-import Types exposing (Chat, Msg(PollMessages))
+import Messages exposing (Msg(PollMessages))
+import Task
 
+init : (Chat, Cmd Msg)
+init = (model, prefetchMessages)
 
-init = (model, Cmd.none)
+prefetchMessages : Cmd Msg
+prefetchMessages =
+  Task.perform
+    (always PollMessages)
+    (Task.succeed ())
 
-
-messageSubscription : Chat -> Sub Msg
-messageSubscription _ =
+subscriptions : Chat -> Sub Msg
+subscriptions _ =
   every (5 * second) (always PollMessages)
 
 
-main : Program Never
+main : Program Never Chat Msg
 main =
-  App.program
-    { init = init, update = update, view = view, subscriptions = messageSubscription }
+  Html.program
+    { init = init
+    , update = update
+    , view = view
+    , subscriptions = subscriptions
+    }
