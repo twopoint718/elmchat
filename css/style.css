@@ -9,6 +9,7 @@ h1 {
 img {
   height: 135px;
   width: auto;
+  margin-bottom: -36px;
 }
 
 .btn {
