@@ -2,7 +2,7 @@ main = Main.elm
 sources = \
 	src/Api.elm \
 	src/Model.elm \
-	src/Types.elm \
+	src/Messages.elm \
 	src/Update.elm \
 	src/View.elm
 cc = elm make

@@ -1,69 +1,23 @@
-module Update exposing (..)
-
+module Update exposing (update)
 
 import Api
-import Http exposing (Request)
-import Task
-import Types exposing (Msg(..))
-import Model exposing (Model, ChatMessage)
+import Messages exposing (Msg(..))
+import Model exposing (Chat)
 
-import RemoteData exposing (WebData, RemoteData(..))
-
-requestMap : (WebData a -> Msg) -> Request a -> Cmd Msg
-requestMap msg request =
-  request
-    |> Http.toTask
-    |> RemoteData.asCmd
-    |> Cmd.map msg
-
-update : Msg -> Model -> (Model, Cmd Msg)
+update : Msg -> Chat -> (Chat, Cmd Msg)
 update msg model =
   case msg of
-    SendMessage msg ->
-      ( { model | saying = "" }
-      , requestMap (always PollMessages) (Api.sendMessage msg)
-      )
+    SendMessage message ->
+      ({ model | saying = "" }, Api.sendMessage message (always PollMessages))
 
     Incoming msgsResult ->
-      (handleIncoming model msgsResult) ! []
+      ({model | messages = msgsResult}, Cmd.none)
 
     PollMessages ->
-      ( model
-      , requestMap Incoming Api.fetchMessages
-      )
+      (model, Api.fetchMessages Incoming)
 
     Input say ->
-      ( { model | saying = say }
-      , Cmd.none
-      )
+      ({ model | saying = say }, Cmd.none)
 
     SetName name ->
-      ( { model | name = name }
-      , Cmd.none
-      )
-
-    ShowError err ->
-      ( { model | errorMessage = err }
-      , Cmd.none
-      )
-
-    NoOp -> (model, Cmd.none)
-
-
-handleIncoming : Model -> (WebData (List ChatMessage)) -> Model
-handleIncoming model msgsResult =
-  case msgsResult of
-    NotAsked ->
-      model
-
-    Loading ->
-      model
-
-    Success msgs ->
-      { model | messages = Success msgs, errorMessage = "" }
-
-    Failure e ->
-      { model
-      | errorMessage = toString e
-      , messages = Failure e
-      }
+      ({ model | name = name }, Cmd.none)

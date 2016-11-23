@@ -1,31 +1,31 @@
-module View exposing (..)
+module View exposing (view)
 
 
-import Array
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import RemoteData exposing (WebData, RemoteData(..))
 
-import Api
-import Types exposing (Msg(..))
-import Model exposing (Model, ChatMessage)
+import Messages exposing (Msg(SendMessage, Input, SetName))
+import Model exposing (Chat, ChatMessage, ChatList)
 
-view : Model -> Html Msg
+view : Chat -> Html Msg
 view model =
   div [ class "container" ]
     [ stylesheet "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
     , stylesheet "css/style.css"
     , stylesheet "http://fonts.googleapis.com/css?family=Special+Elite"
-    , img [src "images/joan.png"] []
-    , h1 [] [ text "Can We Talk!?" ]
-    , row_ [ displayErrors model.messages ]
+    , row_
+      [ h1 [class "col-xs-7"] [ text "Can We Talk!?" ]
+      , div [class "col-xs-5"] [ img [src "images/joan.png"] [] ]
+      ]
+    , row_ [ errors model.messages ]
     , row_ [ inputControls model ]
-    , row_ [ messageList model ]
+    , row_ [ messageList model.messages ]
     ]
 
 
-inputControls : Model -> Html Msg
+inputControls : Chat -> Html Msg
 inputControls model =
   fieldset []
     [ legend [] [ text "Add Message" ]
@@ -33,7 +33,7 @@ inputControls model =
       [ class "form-horizontal"
       , onSubmit (mkMessage model |> SendMessage)
       ]
-      [ formGroup_ ( labeledField "name" "Name" "Your Name" model.name SetName )
+      [ formGroup_ (labeledField "name" "Name" "Your Name" model.name SetName )
       , formGroup_ (labeledField "say" "Say" "Enter a message" model.saying Input )
       , btnPrimary_ "Send"
       ]
@@ -57,8 +57,8 @@ labeledField id_ text_ placeholder_ value_ msg_ =
   ]
 
 
-displayErrors : WebData a -> Html b
-displayErrors messages =
+errors : WebData a -> Html b
+errors messages =
   let
       content =
         case messages of
@@ -71,30 +71,34 @@ displayErrors messages =
     p [ class "text-danger" ] content
 
 
-mkMessage : Model -> ChatMessage
+mkMessage : Chat -> ChatMessage
 mkMessage m =
   { name = m.name
   , message = m.saying
   }
 
 
-sendMessageOnEnter : Int -> ChatMessage ->  Msg
-sendMessageOnEnter key msg =
-  if key == 13 then SendMessage msg else NoOp
-
-
-messageList : Model -> Html a
-messageList model =
-  table
-    [ class "table col-xs-10 table-striped" ]
-    [ thead []
-      [ tr []
-        [ th [ class "col-xs-2" ] [ text "Name" ]
-        , th [] [ text "Message" ]
-        ]
-      ]
-    , tbody [] (perhapsMessages model.messages)
-    ]
+messageList : ChatList -> Html a
+messageList messages =
+  case messages of
+    NotAsked ->
+      notTable "Loading..."
+    Loading ->
+      notTable "Loading..."
+    Failure e ->
+      notTable "Loading failed"
+    Success s ->
+      let
+          messages_ =
+            s
+              |> List.reverse
+              |> List.take 30
+              |> List.map msgRow
+      in
+        zebraTable
+          [ th [ class "col-xs-2" ] [ text "Name" ]
+          , th [] [ text "Message" ]
+          ] messages_
 
 msgRow : ChatMessage -> Html a
 msgRow msg =
@@ -103,34 +107,15 @@ msgRow msg =
     , td [] [ text msg.message ]
     ]
 
-perhapsMessages : WebData (List ChatMessage) -> List (Html a)
-perhapsMessages msgs =
-  case msgs of
-    NotAsked ->
-      [ tr []
-          [ td [] [ text "not loaded" ] ]
-      ]
-    Loading ->
-      [ tr []
-          [ td [] [ text "loading" ] ]
-      ]
-
-    Failure e ->
-      []
-
-    Success messages ->
-      messages
-        |> List.reverse
-        |> List.take 30
-        |> List.map msgRow
-
 stylesheet : String -> Html a
 stylesheet href_ =
-  node "link"
-    [ rel "stylesheet"
-    , href href_
-    ] []
+  node "link" [ rel "stylesheet", href href_] []
 
+notTable : String -> Html a
+notTable content =
+  div [ class "col-xs-12" ]
+    [ aside [] [ text content ]
+    ]
 
 -- From Bootstrap
 
@@ -147,7 +132,12 @@ formGroup_ =
 
 btnPrimary_ : String -> Html a
 btnPrimary_ label =
-  button
-  [ class "btn btn-primary"
-  ]
-  [ text label ]
+  button [ class "btn btn-primary" ] [ text label ]
+
+zebraTable : List (Html a) -> List (Html a) -> Html a
+zebraTable headers bodies =
+  table
+    [ class "table col-xs-10 table-striped" ]
+    [ thead [] [ tr [] headers ]
+    , tbody [] bodies
+    ]

@@ -1,51 +1,44 @@
 module Api exposing (fetchMessages, sendMessage)
 
-import Http exposing (Error, Request)
+import Http exposing (Body)
 import Json.Decode as JD exposing (Decoder)
 import Json.Encode as JE exposing (Value)
 
 import RemoteData exposing (WebData)
 
-import Model exposing (ChatMessage)
+import Model exposing (ChatMessage, ChatList)
+import Messages exposing (Msg)
 
-baseUri : String
-baseUri = "http://localhost:3000/"
+endpoint : String
+endpoint = "http://localhost:3000/messages"
 
 -- GET
 
-get : String -> Decoder a -> Request a
-get path decoder =
-  Http.get (baseUri ++ path) decoder
-
-fetchMessages : Request (List ChatMessage)
-fetchMessages =
-  get "messages" incomingMessagesDecoder
+fetchMessages : (ChatList -> Msg) -> Cmd Msg
+fetchMessages callback =
+  Http.get endpoint incomingMessagesDecoder
+    |> Http.send (callback << RemoteData.fromResult)
 
 incomingMessagesDecoder : Decoder (List ChatMessage)
 incomingMessagesDecoder =
-  JD.list receiveDecoder
+  JD.list incomingMessageDecoder
 
-receiveDecoder : Decoder ChatMessage
-receiveDecoder =
+incomingMessageDecoder : Decoder ChatMessage
+incomingMessageDecoder =
   JD.map2 (\name message -> ChatMessage name message)
     (JD.field "name" JD.string)
     (JD.field "message" JD.string)
 
 -- POST
 
-type alias DontCare = JD.Value
-dontCare : JD.Decoder DontCare
-dontCare = JD.value
+sendMessage : ChatMessage -> (WebData JD.Value -> Msg) -> Cmd Msg
+sendMessage chatMessage callback =
+  Http.post endpoint (bodyToSend chatMessage) JD.value
+    |> Http.send (callback << RemoteData.fromResult)
 
-post : String -> JE.Value -> Request DontCare
-post path msg =
-  Http.post (baseUri ++ path) (Http.jsonBody msg) dontCare
-
-
-sendMessage : ChatMessage -> Request JD.Value
-sendMessage chatMessage =
-  post "messages" (sendEncoder chatMessage)
-
+bodyToSend : ChatMessage -> Body
+bodyToSend chatMessage =
+  Http.jsonBody <| sendEncoder chatMessage
 
 sendEncoder : ChatMessage -> JE.Value
 sendEncoder msg =
