@@ -1,20 +1,19 @@
 module Api exposing (pollMessages, sendMessage)
 
-
-import Dict
-import Http exposing (Error, Response, RawError(RawNetworkError))
-import Json.Decode as Json exposing ((:=))
+import Http exposing (Request)
+import Json.Decode as Json exposing (field)
 import Json.Encode exposing (Value, encode, object, string)
-import Task exposing (Task)
-
-import Types exposing
-  ( ChatMessage
-  , Msg(Incoming, PollMessages, ShowError)
-  )
+import Types
+    exposing
+        ( ChatMessage
+        , Msg(Incoming, PostedMessage)
+        )
 
 
 endpoint : String
-endpoint = "http://localhost:3000/messages"
+endpoint =
+    "http://localhost:3000/messages"
+
 
 
 -- GET
@@ -22,23 +21,25 @@ endpoint = "http://localhost:3000/messages"
 
 pollMessages : Cmd Msg
 pollMessages =
-  Task.perform onError onReceive getMessages
+    Http.send Incoming getMessages
 
 
-getMessages : Task Http.Error (List ChatMessage)
+getMessages : Request (List ChatMessage)
 getMessages =
-  Http.get messagesDecoder endpoint
+    Http.get endpoint messagesDecoder
 
 
 messagesDecoder : Json.Decoder (List ChatMessage)
-messagesDecoder = Json.list messageDecoder
+messagesDecoder =
+    Json.list messageDecoder
 
 
 messageDecoder : Json.Decoder ChatMessage
 messageDecoder =
-  Json.object2 (\name message -> { name = name, message = message })
-    ("name" := Json.string)
-    ("message" := Json.string)
+    Json.map2 (\name message -> { name = name, message = message })
+        (field "name" Json.string)
+        (field "message" Json.string)
+
 
 
 -- POST
@@ -46,54 +47,28 @@ messageDecoder =
 
 sendMessage : ChatMessage -> Cmd Msg
 sendMessage msg =
-  Task.perform onError onSent (postMessage msg)
+    Http.send PostedMessage (postMessage msg)
 
 
-postMessage : ChatMessage -> Task RawError ()
+postMessage : ChatMessage -> Request ()
 postMessage msg =
-  Http.send Http.defaultSettings
-    { verb = "POST"
-    , headers = []
-    , url = endpoint
-    , body =
-        messageEncoder msg
-          |> encode 0
-          |> Http.string
-    }
-    `Task.andThen` handlePostResponse
+    Http.request
+        { method = "POST"
+        , headers = []
+        , url = endpoint
+        , body =
+            messageEncoder msg
+                |> encode 0
+                |> Http.stringBody "application/json"
+        , expect = Http.expectStringResponse (\_ -> Ok ())
+        , timeout = Nothing
+        , withCredentials = False
+        }
 
 
 messageEncoder : ChatMessage -> Json.Value
 messageEncoder msg =
-  object
-    [ ("name", string msg.name)
-    , ("message", string msg.message)
-    ]
-
-
--- Response handlers
-
-
-onError : err -> Msg
-onError err = ShowError (toString err)
-
-
--- About the weird type... if we get here then the Http POST worked, now
--- we just refresh messages so the person posting can see their new message.
-onSent : () -> Msg
-onSent _ = PollMessages
-
-
-handlePostResponse : Response -> Task RawError ()
-handlePostResponse resp =
-  case Dict.get "Location" resp.headers of
-    Nothing ->
-      Task.fail RawNetworkError
-
-    Just _ ->
-      Task.succeed ()
-
-
-onReceive : List ChatMessage -> Msg
-onReceive msgs =
-    Incoming msgs
+    object
+        [ ( "name", string msg.name )
+        , ( "message", string msg.message )
+        ]
