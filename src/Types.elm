@@ -1,26 +1,25 @@
 module Types exposing (Msg(..), Chat, ChatMessage)
 
-
-import Array exposing (Array)
+import Http
 
 
 type Msg
-  = SendMessage ChatMessage
-  | Incoming (List ChatMessage)
-  | Input String
-  | NoOp
-  | PollMessages
-  | SetName String
-  | ShowError String
+    = SendMessage ChatMessage
+    | Incoming (Result Http.Error (List ChatMessage))
+    | Input String
+    | NoOp
+    | PollMessages
+    | PostedMessage (Result Http.Error ())
+    | SetName String
 
 
-type alias ChatMessage
-  = { name: String, message: String }
+type alias ChatMessage =
+    { name : String, message : String }
 
 
 type alias Chat =
-  { messages : List ChatMessage
-  , errorMessage : String
-  , field : String
-  , name : String
-  }
+    { messages : List ChatMessage
+    , errorMessage : String
+    , field : String
+    , name : String
+    }
